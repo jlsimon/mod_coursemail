@@ -1,0 +1,421 @@
+/* mod_coursemail — Phase 14A mailbox reskin.
+ *
+ * Styles only: this stylesheet hooks onto the markup the templates already emit
+ * (coursemail-item, coursemail-from, coursemail-subject, coursemail-preview,
+ * coursemail-own, ...). It does NOT change any DOM, so Behat selectors and the
+ * 2-pane layout stay exactly as they are. Colours fall back to Boost's brand via
+ * the --primary custom property when the theme does not provide it.
+ */
+
+/* Folder navigation: lighter, denser, with a hover affordance. */
+.coursemail-mailbox [data-region="folders"] .list-group-item {
+    border: 0;
+    border-radius: 0.25rem;
+    padding: 0.45rem 0.75rem;
+    font-weight: 500;
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.coursemail-mailbox [data-region="folders"] .list-group-item + .list-group-item {
+    margin-top: 2px;
+}
+
+.coursemail-mailbox [data-region="folders"] .list-group-item:not(.active):hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Message list: email-like density and an unread accent. */
+.coursemail-message-list .coursemail-item {
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    padding: 0.55rem 0.85rem;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+/* The list rows are <button>s, so the theme would force their whole content to
+   uppercase. Variable-length content (subjects, previews, dates) reads far better
+   in normal case, like every modern mail client — opt out here. */
+.coursemail-message-list .coursemail-item,
+.coursemail-message-list .coursemail-item .coursemail-from,
+.coursemail-message-list .coursemail-item .coursemail-subject,
+.coursemail-message-list .coursemail-item .coursemail-preview,
+.coursemail-message-list .coursemail-item .coursemail-date {
+    text-transform: none;
+}
+
+.coursemail-message-list .coursemail-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Unread items: bold is already applied by the template; add an accent bar,
+ * a faint wash and a leading dot next to the sender. */
+.coursemail-message-list .coursemail-item.font-weight-bold {
+    border-left-color: var(--primary, #0f6cbf);
+    background-color: rgba(15, 108, 191, 0.045);
+}
+
+.coursemail-message-list .coursemail-item.font-weight-bold .coursemail-from::before {
+    content: "";
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.4rem;
+    border-radius: 50%;
+    background-color: var(--primary, #0f6cbf);
+    vertical-align: middle;
+}
+
+.coursemail-message-list .coursemail-from {
+    font-size: 0.95rem;
+}
+
+/* Three-level typographic hierarchy (no background bands, modern-mail style):
+   - sender: medium weight anchors the "who" even once read;
+   - subject: the prominent title line (1rem, semibold), the row's scan anchor;
+   - date: quiet metadata, smaller and never bold.
+   The theme's whole-row bold for unread (.font-weight-bold on the item) still wins
+   over the medium/semibold below, so unread rows stay visibly heavier. */
+.coursemail-message-list .coursemail-item:not(.font-weight-bold) .coursemail-from {
+    font-weight: 500;
+}
+
+.coursemail-message-list .coursemail-subject {
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.coursemail-message-list .coursemail-item:not(.font-weight-bold) .coursemail-subject {
+    font-weight: 600;
+}
+
+.coursemail-message-list .coursemail-date {
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+/* Recipients disclosure: the collapsed summary stays on one truncated line; the
+   pointer cursor signals it is expandable. */
+.coursemail-recipients > summary {
+    cursor: pointer;
+    max-width: 100%;
+}
+
+/* Recipient chips: the 2px border colour reports the overall progress at a glance
+   (grey = unread, amber = read but unanswered, green = replied). Status icons only
+   appear for the positive states — a green tick once read, a blue arrow once replied;
+   nothing otherwise, so the chip stays quiet until there is something to report. */
+.coursemail-recipient {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 2px solid #ced4da;
+}
+
+.coursemail-recipient-read {
+    border-color: #f0ad4e;
+}
+
+.coursemail-recipient-replied {
+    border-color: #5cb85c;
+}
+
+.coursemail-recipient .coursemail-rs-read {
+    color: #5cb85c;
+}
+
+.coursemail-recipient .coursemail-rs-replied {
+    color: #2f6fb0;
+}
+
+/* Manual-completion marker: a green "Completed" tag once a teacher has signed the
+   student off, distinct from the read/reply icons. The small toggle button sits
+   alongside it inside the chip. */
+.coursemail-recipient .coursemail-rs-done {
+    color: #5cb85c;
+    font-weight: 600;
+}
+
+.coursemail-recipient .coursemail-rs-done .icon {
+    margin-right: 0.2rem;
+}
+
+.coursemail-recipient .coursemail-complete-btn {
+    font-size: 0.78rem;
+}
+
+/* Keep the preview on a single line so the list reads like a mailbox. */
+.coursemail-message-list .coursemail-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Conversation thread: turn flat cards into chat-like bubbles. */
+.coursemail-conversation .coursemail-message {
+    max-width: 85%;
+    border-radius: 0.5rem;
+}
+
+.coursemail-conversation .coursemail-message .card-header {
+    background-color: rgba(0, 0, 0, 0.025);
+    border-bottom: 0;
+}
+
+/* Own messages lean right with the brand accent. */
+.coursemail-conversation .coursemail-own {
+    margin-left: auto;
+    border-color: var(--primary, #0f6cbf);
+}
+
+.coursemail-conversation .coursemail-own .card-header {
+    background-color: rgba(15, 108, 191, 0.06);
+}
+
+.coursemail-conversation .coursemail-message .card-body {
+    line-height: 1.5;
+}
+
+/* Star buttons: subtle until hovered/active. */
+.coursemail-conversation .coursemail-star {
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.coursemail-conversation .coursemail-star:hover,
+.coursemail-conversation .coursemail-star[aria-pressed="true"] {
+    opacity: 1;
+}
+
+.coursemail-conversation .coursemail-star:hover {
+    transform: scale(1.1);
+}
+
+/* Respect users who prefer no motion. */
+@media (prefers-reduced-motion: reduce) {
+    .coursemail-mailbox [data-region="folders"] .list-group-item,
+    .coursemail-message-list .coursemail-item,
+    .coursemail-conversation .coursemail-star {
+        transition: none;
+    }
+}
+
+/* Selected item in the message list (reading-pane layout). */
+.coursemail-message-list .coursemail-item-active,
+.coursemail-message-list .coursemail-item-active:hover {
+    background-color: rgba(15, 108, 191, 0.12);
+}
+
+.coursemail-message-list .coursemail-item-active {
+    border-left-color: var(--primary, #0f6cbf);
+}
+
+/* ----- Three-pane reading-pane layout ----- */
+
+/* Desktop (>= lg): three side-by-side panes, each scrolling independently. */
+@media (min-width: 992px) {
+    .coursemail-3pane .coursemail-panes {
+        height: 72vh;
+        min-height: 24rem;
+        overflow: hidden;
+    }
+
+    .coursemail-3pane .coursemail-pane {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .coursemail-3pane .coursemail-pane-folders,
+    .coursemail-3pane .coursemail-pane-list {
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* The reading pane owns the back affordance; on desktop it is redundant. */
+    .coursemail-3pane .coursemail-conversation [data-action="back"] {
+        display: none;
+    }
+
+    .coursemail-3pane .coursemail-pane-reading .coursemail-conversation,
+    .coursemail-3pane .coursemail-pane-reading .coursemail-compose {
+        padding: 1rem;
+    }
+}
+
+/* Narrow screens (< lg): one visible panel at a time. Folders + list show by
+   default; opening a message swaps to the reading pane (see the JS toggle). */
+@media (max-width: 991.98px) {
+    .coursemail-3pane.coursemail-reading-open .coursemail-pane-folders,
+    .coursemail-3pane.coursemail-reading-open .coursemail-pane-list {
+        display: none;
+    }
+
+    .coursemail-3pane:not(.coursemail-reading-open) .coursemail-pane-reading {
+        display: none;
+    }
+
+    .coursemail-3pane .coursemail-pane-reading .coursemail-conversation,
+    .coursemail-3pane .coursemail-pane-reading .coursemail-compose {
+        padding: 0.75rem;
+    }
+}
+
+.coursemail-reading-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Reading-pane action toolbar: stays visible while the thread scrolls.
+   (The back button inside it is already hidden on >= lg by the rule above.) */
+.coursemail-3pane .coursemail-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    gap: 0.25rem 0;
+    background-color: var(--body-bg, #fff);
+}
+
+/* ----- Top toolbar (scope + search) ----- */
+
+/* The search box takes a comfortable width on the right; on very narrow screens
+   it wraps to its own full-width row below the scope toggle. */
+.coursemail-topbar .coursemail-search {
+    flex: 0 1 24rem;
+    min-width: 12rem;
+}
+
+@media (max-width: 575.98px) {
+    .coursemail-topbar .coursemail-search {
+        flex-basis: 100%;
+        margin-top: 0.25rem;
+    }
+}
+
+/* ----- Collapsible folder navigation (desktop only) ----- */
+
+/* The toggle is meaningless where the panes already collapse to one panel. */
+@media (max-width: 991.98px) {
+    .coursemail-3pane [data-action="toggle-nav"] {
+        display: none;
+    }
+}
+
+@media (min-width: 992px) {
+    /* Flexible panes so the room freed by collapsing folders is handed to the
+       list and reading panes (keeping roughly the previous 4:6 proportion). */
+    .coursemail-3pane .coursemail-panes {
+        flex-wrap: nowrap;
+    }
+
+    .coursemail-3pane .coursemail-pane-folders {
+        flex: 0 0 13rem;
+        max-width: 13rem;
+        transition: flex-basis 0.15s ease, max-width 0.15s ease;
+    }
+
+    .coursemail-3pane .coursemail-pane-list {
+        flex: 2 1 0;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .coursemail-3pane .coursemail-pane-reading {
+        flex: 3 1 0;
+        min-width: 0;
+        max-width: none;
+    }
+
+    /* Collapsed: icons only, narrow column with centred buttons. */
+    .coursemail-3pane.coursemail-nav-collapsed .coursemail-pane-folders {
+        flex-basis: 3.5rem;
+        max-width: 3.5rem;
+    }
+
+    .coursemail-3pane.coursemail-nav-collapsed .coursemail-pane-folders .list-group-item,
+    .coursemail-3pane.coursemail-nav-collapsed .coursemail-pane-folders [data-action="compose"] {
+        justify-content: center;
+    }
+
+    /* Keep folder/compose labels for screen readers, but hide them visually. */
+    .coursemail-3pane.coursemail-nav-collapsed .coursemail-pane-folders .coursemail-nav-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coursemail-3pane .coursemail-pane-folders {
+        transition: none;
+    }
+}
+
+/* Multi-select bulk actions (Inbox, activity scope). The checkbox column is hidden
+   until JS marks the list selectable; the row keeps the list-group-item look. */
+.coursemail-item-row .coursemail-item-check {
+    display: none;
+    flex: 0 0 auto;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.coursemail-mailbox.coursemail-selectable .coursemail-item-check {
+    display: flex;
+}
+
+.coursemail-item-row .coursemail-item {
+    min-width: 0;
+}
+
+.coursemail-mailbox.coursemail-selectable .coursemail-item-row.coursemail-row-selected .coursemail-item {
+    background-color: var(--primary, #0f6cbf);
+    color: #fff;
+}
+
+.coursemail-bulkbar {
+    display: none;
+}
+
+.coursemail-bulkbar.coursemail-bulkbar-show {
+    display: flex !important;
+}
+
+/* Course-page badges: small pills shown after the activity name to report, at a
+   glance, how much is pending. Colour matches the recipient chips (amber = action
+   needed, blue = unread/informational). The container is hidden when empty. */
+.coursemail-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.coursemail-badge {
+    display: inline-block;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.coursemail-badge-action {
+    border-color: #f0ad4e;
+    background-color: #fcf3e3;
+    color: #8a5a00;
+}
+
+.coursemail-badge-unread {
+    border-color: #9ec5ec;
+    background-color: #eaf2fb;
+    color: #1f5a96;
+}

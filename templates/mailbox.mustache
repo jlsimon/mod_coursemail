@@ -1,0 +1,146 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursemail/mailbox
+
+    Mailbox page shell: a three-pane reading-pane layout (folders | message list |
+    reading pane). The list and reading regions are filled by JavaScript. On narrow
+    screens the panes collapse to a single visible panel and the JS toggles the
+    coursemail-reading-open class to move between the list and the open message.
+
+    Context variables required for this template:
+    * cmid - Course module id
+    * cancompose - Whether the user can compose messages
+    * composelabel - Custom compose button label (falsy = default "Compose")
+    * scopeavailable - Whether to show the activity/course scope toggle
+    * folders - Array of { key, name, active }
+
+    Example context (json):
+    {
+        "cmid": 42,
+        "cancompose": true,
+        "composelabel": "",
+        "scopeavailable": true,
+        "folders": [
+            { "key": "inbox", "name": "Inbox", "icon": "fa-inbox", "active": true },
+            { "key": "sent", "name": "Sent", "icon": "fa-paper-plane", "active": false }
+        ]
+    }
+}}
+<div class="coursemail-mailbox coursemail-3pane" data-region="coursemail-mailbox" data-cmid="{{cmid}}">
+    {{! Top toolbar: page-global context (scope) on the left, search on the right.
+        Both stay visible regardless of the folder column's collapsed state. }}
+    <div class="coursemail-topbar d-flex align-items-center flex-wrap p-2 mb-2 border rounded">
+        {{#scopeavailable}}
+            {{! Toggle between this activity's mailbox and a unified view of every coursemail in the course. }}
+            <div class="btn-group btn-group-sm coursemail-scope mr-2 mb-1 mb-sm-0" role="group"
+                 data-region="scope" aria-label="{{#str}}scope, coursemail{{/str}}">
+                <button type="button" class="btn btn-outline-secondary active"
+                        data-action="select-scope" data-scope="activity" aria-pressed="true"
+                        title="{{#str}}scopeactivity, coursemail{{/str}}">
+                    <i class="icon fa fa-inbox m-0" aria-hidden="true"></i><span class="ml-1">{{#str}}scopeactivity, coursemail{{/str}}</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary"
+                        data-action="select-scope" data-scope="course" aria-pressed="false"
+                        title="{{#str}}scopecourse, coursemail{{/str}}">
+                    <i class="icon fa fa-graduation-cap m-0" aria-hidden="true"></i><span class="ml-1">{{#str}}scopecourse, coursemail{{/str}}</span>
+                </button>
+            </div>
+        {{/scopeavailable}}
+        {{! Search conversations by subject/body within the current scope. }}
+        <form class="coursemail-search ml-auto" data-region="search" role="search">
+            <div class="input-group input-group-sm">
+                <input type="search" class="form-control" data-field="search" autocomplete="off"
+                       placeholder="{{#str}}search, coursemail{{/str}}"
+                       aria-label="{{#str}}search, coursemail{{/str}}">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-outline-secondary px-2" data-action="search"
+                            title="{{#str}}search, coursemail{{/str}}" aria-label="{{#str}}search, coursemail{{/str}}">
+                        <i class="icon fa fa-search m-0" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+        {{! Help: opens a role-aware help screen in the reading pane. }}
+        <button type="button" class="btn btn-sm btn-outline-secondary ml-2 mb-1 mb-sm-0" data-action="help"
+                title="{{#str}}help, coursemail{{/str}}" aria-label="{{#str}}help, coursemail{{/str}}">
+            <i class="icon fa fa-question-circle m-0" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="row no-gutters coursemail-panes border rounded">
+        <div class="col-lg-2 coursemail-pane coursemail-pane-folders p-2">
+            <div class="d-flex justify-content-end mb-1 coursemail-nav-toggle-row">
+                <button type="button" class="btn btn-sm btn-light px-2" data-action="toggle-nav"
+                        id="cm-nav-toggle-{{cmid}}" aria-controls="cm-folders-{{cmid}}" aria-expanded="true"
+                        title="{{#str}}collapsenav, coursemail{{/str}}"
+                        aria-label="{{#str}}collapsenav, coursemail{{/str}}">
+                    <i class="icon fa fa-angle-double-left m-0 coursemail-nav-toggle-icon" aria-hidden="true"></i>
+                </button>
+            </div>
+            {{#cancompose}}
+                <button type="button" class="btn btn-primary btn-block mb-2 text-truncate" data-action="compose"
+                        title="{{#composelabel}}{{composelabel}}{{/composelabel}}{{^composelabel}}{{#str}}compose, coursemail{{/str}}{{/composelabel}}">
+                    <i class="icon fa fa-pencil m-0" aria-hidden="true"></i><span class="coursemail-nav-label ml-1">{{#composelabel}}{{composelabel}}{{/composelabel}}{{^composelabel}}{{#str}}compose, coursemail{{/str}}{{/composelabel}}</span>
+                </button>
+            {{/cancompose}}
+            <div class="list-group list-group-flush" id="cm-folders-{{cmid}}" data-region="folders" role="tablist">
+                {{#folders}}
+                    <button type="button"
+                            class="list-group-item list-group-item-action d-flex align-items-center {{#active}}active{{/active}}"
+                            data-action="select-folder" data-folder="{{key}}" title="{{name}}">
+                        <i class="icon fa {{icon}} m-0 coursemail-folder-icon" aria-hidden="true"></i>
+                        <span class="coursemail-nav-label ml-2">{{name}}</span>
+                    </button>
+                {{/folders}}
+            </div>
+        </div>
+        <div class="col-lg-4 coursemail-pane coursemail-pane-list">
+            {{! Quick filters; JS shows the one relevant to the current folder. }}
+            <div class="coursemail-filterbar p-2 border-bottom d-none" data-region="filterbar">
+                <button type="button" class="btn btn-sm btn-outline-secondary d-none"
+                        data-action="filter" data-filter="unread" aria-pressed="false">
+                    <i class="icon fa fa-envelope m-0 mr-1" aria-hidden="true"></i>{{#str}}filterunread, coursemail{{/str}}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-none"
+                        data-action="filter" data-filter="unanswered" aria-pressed="false">
+                    <i class="icon fa fa-reply m-0 mr-1" aria-hidden="true"></i>{{#str}}filterunanswered, coursemail{{/str}}
+                </button>
+            </div>
+            {{! Bulk-action bar; JS shows it when one or more conversations are selected. }}
+            <div class="coursemail-bulkbar p-2 border-bottom d-none align-items-center" data-region="bulkbar">
+                <span class="mr-2 small text-muted" data-region="bulkcount"></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-action="bulk" data-read="1">
+                    <i class="icon fa fa-envelope-open-o m-0 mr-1" aria-hidden="true"></i>{{#str}}markread, coursemail{{/str}}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-1" data-action="bulk" data-read="0">
+                    <i class="icon fa fa-envelope m-0 mr-1" aria-hidden="true"></i>{{#str}}markunread, coursemail{{/str}}
+                </button>
+                <button type="button" class="btn btn-sm btn-link p-0" data-action="bulk-clear">{{#str}}cancel, core{{/str}}</button>
+            </div>
+            <div data-region="content" aria-live="polite">
+                <div class="text-muted p-3" data-region="loading">{{#str}}loading, core{{/str}}</div>
+            </div>
+        </div>
+        <div class="col-lg-6 coursemail-pane coursemail-pane-reading">
+            <div data-region="reading" aria-live="polite">
+                <div class="coursemail-reading-empty text-muted p-5 text-center" data-region="reading-empty">
+                    {{#str}}selectmessage, coursemail{{/str}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,165 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursemail/conversation
+
+    Renders a single conversation thread.
+
+    Context variables required for this template:
+    * id - Conversation id
+    * subject - Conversation subject
+    * requiresresponse - Whether the conversation requires a response
+    * canmarkunread - Whether the current user can mark the thread unread
+    * canstar - Whether the user can star messages (false for a pure supervisor)
+    * requiresmanualcomplete - Whether the thread is completed manually, per student
+    * canmanualcomplete - Whether the current user may mark students complete
+    * recipientcount - Number of addressees
+    * recipients - Array of addressees ({userid, name, completed, completedinfo, last, ...})
+    * messages - Array of messages
+
+    Example context (json):
+    {
+        "id": 5,
+        "subject": "Welcome",
+        "requiresresponse": true,
+        "canmarkunread": true,
+        "canstar": true,
+        "recipientcount": 2,
+        "recipients": [
+            {"name": "Student One", "last": false},
+            {"name": "Student Two", "last": true}
+        ],
+        "messages": [
+            {
+                "id": 9,
+                "fromid": 2,
+                "fromname": "Teacher One",
+                "body": "<p>Hello</p>",
+                "timeformatted": "1 Jan 2026",
+                "isown": false,
+                "starred": false
+            }
+        ]
+    }
+}}
+<div class="coursemail-conversation" data-region="conversation" data-conversationid="{{id}}">
+    <div class="coursemail-toolbar d-flex align-items-center flex-wrap mb-3 pb-2 border-bottom">
+        <button type="button" class="btn btn-link pl-0 coursemail-back" data-action="back">
+            <i class="icon fa fa-arrow-left" aria-hidden="true"></i>{{#str}}back, core{{/str}}
+        </button>
+        <h3 class="h5 mb-0 ml-2 mr-auto coursemail-conversation-subject"
+            tabindex="-1" data-region="conversation-subject">{{subject}}</h3>
+        {{#requiresresponse}}
+            <span class="badge badge-info mr-2">{{#str}}requiresresponse, coursemail{{/str}}</span>
+        {{/requiresresponse}}
+        {{#requiresmanualcomplete}}
+            <span class="badge badge-secondary mr-2">{{#str}}manualcompletebadge, coursemail{{/str}}</span>
+        {{/requiresmanualcomplete}}
+        {{#canmarkunread}}
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="mark-unread">
+                <i class="icon fa fa-envelope m-0 mr-1" aria-hidden="true"></i>{{#str}}markunread, coursemail{{/str}}
+            </button>
+        {{/canmarkunread}}
+    </div>
+
+    {{! Addressees of the thread, collapsed by default; the summary truncates, expanding reveals all.
+        For manual-completion threads it starts open so the per-student controls are visible. }}
+    {{#recipientcount}}
+        <details class="coursemail-recipients mb-3" data-region="recipients" {{#requiresmanualcomplete}}open{{/requiresmanualcomplete}}>
+            <summary class="text-muted small text-truncate">
+                {{#str}}to, coursemail{{/str}}: {{#recipients}}{{name}}{{^last}}, {{/last}}{{/recipients}}
+            </summary>
+            <div class="mt-2 d-flex flex-wrap">
+                {{#recipients}}
+                    <span class="badge badge-light coursemail-recipient coursemail-recipient-{{borderstate}} mr-1 mb-1 font-weight-normal">
+                        {{name}}
+                        {{#read}}
+                            <i class="icon fa fa-check coursemail-rs-read fa-fw m-0"
+                               title="{{readtitle}}" aria-label="{{readtitle}}" role="img"></i>
+                        {{/read}}
+                        {{#replied}}
+                            <i class="icon fa fa-reply coursemail-rs-replied fa-fw m-0"
+                               title="{{replytitle}}" aria-label="{{replytitle}}" role="img"></i>
+                        {{/replied}}
+                        {{#completed}}
+                            <span class="coursemail-rs-done" title="{{completedinfo}}">
+                                <i class="icon fa fa-check-circle fa-fw m-0" aria-hidden="true"></i>{{#str}}completedbadge, coursemail{{/str}}
+                            </span>
+                        {{/completed}}
+                        {{#canmanualcomplete}}
+                            <button type="button" class="btn btn-sm coursemail-complete-btn ml-1 py-0
+                                    {{#completed}}btn-outline-secondary{{/completed}}{{^completed}}btn-outline-success{{/completed}}"
+                                    data-action="toggle-completed" data-userid="{{userid}}"
+                                    aria-pressed="{{#completed}}true{{/completed}}{{^completed}}false{{/completed}}">
+                                {{#completed}}{{#str}}reopencompleted, coursemail{{/str}}{{/completed}}{{^completed}}{{#str}}markcompleted, coursemail{{/str}}{{/completed}}
+                            </button>
+                        {{/canmanualcomplete}}
+                    </span>
+                {{/recipients}}
+            </div>
+        </details>
+    {{/recipientcount}}
+
+    {{#messages}}
+        <div class="coursemail-message card mb-2 {{#isown}}coursemail-own{{/isown}}" data-messageid="{{id}}">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <span class="font-weight-bold">{{fromname}}</span>
+                <span class="d-flex align-items-center">
+                    <small class="text-muted mr-2">{{timeformatted}}</small>
+                    {{! canstar lives on the parent context; a pure supervisor opens the thread read-only. }}
+                    {{#canstar}}
+                        <button type="button" class="btn btn-sm btn-link p-0 coursemail-star"
+                                data-action="toggle-star" data-messageid="{{id}}"
+                                aria-pressed="{{#starred}}true{{/starred}}{{^starred}}false{{/starred}}">
+                            <i class="icon fa {{#starred}}fa-star text-warning{{/starred}}{{^starred}}fa-star-o{{/starred}} m-0"
+                               aria-hidden="true"></i>
+                        </button>
+                    {{/canstar}}
+                </span>
+            </div>
+            <div class="card-body py-2">{{{body}}}</div>
+            {{#hasattachments}}
+                <div class="card-footer py-2 coursemail-attachments">
+                    {{#attachments}}
+                        <a href="{{url}}" class="badge badge-light border font-weight-normal mr-1 mb-1">
+                            <i class="icon fa fa-paperclip m-0 mr-1" aria-hidden="true"></i>{{filename}}
+                        </a>
+                    {{/attachments}}
+                </div>
+            {{/hasattachments}}
+        </div>
+    {{/messages}}
+
+    {{#canreply}}
+        <form class="coursemail-reply mt-3" data-region="reply">
+            <div class="form-group">
+                <label class="sr-only" for="cm-reply-body">{{#str}}reply, coursemail{{/str}}</label>
+                <textarea class="form-control" id="cm-reply-body" data-field="reply-body" rows="3"
+                          placeholder="{{#str}}writereply, coursemail{{/str}}"></textarea>
+            </div>
+            {{! Reply attachments staged via upload.php (fresh draft area). }}
+            <div class="form-group" data-region="attachments">
+                <input type="hidden" data-field="draftitemid" value="0">
+                <ul class="list-unstyled mb-2" data-region="attachment-list"></ul>
+                <input type="file" class="form-control-file" data-field="attachment-input" multiple>
+            </div>
+            <button type="button" class="btn btn-primary" data-action="send-reply">
+                {{#str}}reply, coursemail{{/str}}
+            </button>
+        </form>
+    {{/canreply}}
+</div>

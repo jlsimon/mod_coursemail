@@ -1,0 +1,178 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_coursemail/compose
+
+    The compose form (new conversation or editing a draft).
+
+    Context variables required for this template:
+    * cansend - Whether the user can target individuals/class/groups
+    * hasgroups - Whether any groups are available
+    * users - Array of { id, name } (recipients for staff; teachers for students)
+    * groups - Array of { id, name }
+    * single - Student case: exactly one teacher is available
+    * recipientname - Name of the single teacher, when single is true
+    * norecipients - Student case: no teacher is available to write to
+    * draftid - Existing draft id (0 for a new message)
+    * subject - Prefilled subject
+    * body - Prefilled body
+    * targetcmid - Course module id the message will be created in
+    * hasactivitypicker - Whether to offer the target-activity selector (unified view)
+    * activities - Array of { cmid, name, selected } when hasactivitypicker is true
+    * requiresresponsedefault - Whether the requires-response switch starts ticked
+    * requiremanualcompletedefault - Whether the manual-completion switch starts ticked
+
+    Example context (json):
+    {
+        "cansend": true,
+        "hasgroups": true,
+        "users": [ { "id": 3, "name": "Student One" } ],
+        "groups": [ { "id": 1, "name": "Group A" } ],
+        "single": false,
+        "recipientname": "",
+        "norecipients": false,
+        "draftid": 0,
+        "subject": "",
+        "body": "",
+        "targetcmid": 42,
+        "hasactivitypicker": false,
+        "activities": []
+    }
+}}
+<form class="coursemail-compose" data-region="compose" data-draftid="{{draftid}}" data-targetcmid="{{targetcmid}}">
+    {{#hasactivitypicker}}
+        {{! Unified view: pick which course activity the new message is created in. }}
+        <div class="form-group" data-region="compose-activity">
+            <label for="cm-activity" class="font-weight-bold">{{#str}}composeinactivity, coursemail{{/str}}</label>
+            <select class="form-control" id="cm-activity" data-field="activity">
+                {{#activities}}<option value="{{cmid}}" {{#selected}}selected{{/selected}}>{{name}}</option>{{/activities}}
+            </select>
+        </div>
+    {{/hasactivitypicker}}
+    <div class="form-group">
+        <label class="font-weight-bold">{{#str}}recipienttype, coursemail{{/str}}</label>
+        {{#cansend}}
+            <div class="form-inline mb-2" data-region="recipient-types">
+                <div class="form-check mr-3">
+                    <input class="form-check-input" type="radio" name="recipienttype"
+                           id="cm-rt-users" value="users" checked>
+                    <label class="form-check-label" for="cm-rt-users">{{#str}}recipients_users, coursemail{{/str}}</label>
+                </div>
+                <div class="form-check mr-3">
+                    <input class="form-check-input" type="radio" name="recipienttype"
+                           id="cm-rt-class" value="class">
+                    <label class="form-check-label" for="cm-rt-class">{{#str}}recipients_class, coursemail{{/str}}</label>
+                </div>
+                {{#hasgroups}}
+                    <div class="form-check mr-3">
+                        <input class="form-check-input" type="radio" name="recipienttype"
+                               id="cm-rt-group" value="group">
+                        <label class="form-check-label" for="cm-rt-group">{{#str}}recipients_group, coursemail{{/str}}</label>
+                    </div>
+                {{/hasgroups}}
+            </div>
+            <label class="sr-only" for="cm-users">{{#str}}selectrecipients, coursemail{{/str}}</label>
+            <select multiple class="form-control mb-2" id="cm-users" data-field="users" size="5"
+                    aria-label="{{#str}}selectrecipients, coursemail{{/str}}">
+                {{#users}}<option value="{{id}}">{{name}}</option>{{/users}}
+            </select>
+            {{#hasgroups}}
+                <label class="sr-only" for="cm-groups">{{#str}}selectgroups, coursemail{{/str}}</label>
+                <select multiple class="form-control mb-2 d-none" id="cm-groups" data-field="groups" size="5"
+                        aria-label="{{#str}}selectgroups, coursemail{{/str}}">
+                    {{#groups}}<option value="{{id}}">{{name}}</option>{{/groups}}
+                </select>
+            {{/hasgroups}}
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="cm-rr" data-field="requiresresponse"
+                       {{#requiresresponsedefault}}checked{{/requiresresponsedefault}}>
+                <label class="form-check-label" for="cm-rr">{{#str}}requireresponsedefault, coursemail{{/str}}</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="cm-mc" data-field="requiresmanualcomplete"
+                       {{#requiremanualcompletedefault}}checked{{/requiremanualcompletedefault}}>
+                <label class="form-check-label" for="cm-mc">{{#str}}composemanualcomplete, coursemail{{/str}}</label>
+            </div>
+        {{/cansend}}
+        {{^cansend}}
+            {{#norecipients}}
+                <input type="hidden" data-field="recipienttype" value="staff">
+                <p class="form-control-plaintext text-muted">{{#str}}norecipientsstaff, coursemail{{/str}}</p>
+            {{/norecipients}}
+            {{^norecipients}}
+                {{#single}}
+                    <input type="hidden" data-field="recipienttype" value="staff">
+                    <p class="form-control-plaintext">{{#str}}recipientsingle, coursemail, {{recipientname}}{{/str}}</p>
+                {{/single}}
+                {{^single}}
+                    <div class="form-inline mb-2" data-region="recipient-types">
+                        <div class="form-check mr-3">
+                            <input class="form-check-input" type="radio" name="recipienttype"
+                                   id="cm-rt-allstaff" value="staff" checked>
+                            <label class="form-check-label" for="cm-rt-allstaff">{{#str}}recipients_allstaff, coursemail{{/str}}</label>
+                        </div>
+                        <div class="form-check mr-3">
+                            <input class="form-check-input" type="radio" name="recipienttype"
+                                   id="cm-rt-selstaff" value="staffselected">
+                            <label class="form-check-label" for="cm-rt-selstaff">{{#str}}recipients_selectedstaff, coursemail{{/str}}</label>
+                        </div>
+                    </div>
+                    <label class="sr-only" for="cm-staffusers">{{#str}}selectrecipients, coursemail{{/str}}</label>
+                    <select multiple class="form-control mb-2 d-none" id="cm-staffusers" data-field="staffusers" size="5"
+                            aria-label="{{#str}}selectrecipients, coursemail{{/str}}">
+                        {{#users}}<option value="{{id}}">{{name}}</option>{{/users}}
+                    </select>
+                {{/single}}
+            {{/norecipients}}
+        {{/cansend}}
+    </div>
+
+    <div class="form-group">
+        <label for="cm-subject" class="font-weight-bold">{{#str}}subject, coursemail{{/str}}</label>
+        <input type="text" class="form-control" id="cm-subject" data-field="subject" value="{{subject}}" maxlength="255">
+    </div>
+
+    <div class="form-group">
+        <label for="cm-body" class="font-weight-bold">{{#str}}messagebody, coursemail{{/str}}</label>
+        <textarea class="form-control" id="cm-body" data-field="body" rows="8">{{body}}</textarea>
+    </div>
+
+    {{! Attachments: files are staged in a user draft area via upload.php; the id travels here. }}
+    <div class="form-group" data-region="attachments">
+        <label class="font-weight-bold">{{#str}}attachments, coursemail{{/str}}</label>
+        <input type="hidden" data-field="draftitemid" value="{{draftitemid}}">
+        <ul class="list-unstyled mb-2" data-region="attachment-list">
+            {{#attachments}}
+                <li class="coursemail-attachment d-flex align-items-center mb-1" data-filename="{{filename}}">
+                    <i class="icon fa fa-paperclip m-0 mr-1" aria-hidden="true"></i>
+                    <span class="mr-2">{{filename}}</span>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" data-action="remove-attachment"
+                            data-filename="{{filename}}" aria-label="{{#str}}delete, core{{/str}}">
+                        <i class="icon fa fa-times m-0" aria-hidden="true"></i>
+                    </button>
+                </li>
+            {{/attachments}}
+        </ul>
+        <input type="file" class="form-control-file" data-field="attachment-input" multiple>
+    </div>
+
+    <div class="d-flex">
+        <button type="button" class="btn btn-primary mr-2" data-action="send">{{#str}}send, coursemail{{/str}}</button>
+        <button type="button" class="btn btn-secondary mr-2" data-action="savedraft">{{#str}}savedraft, coursemail{{/str}}</button>
+        <button type="button" class="btn btn-link" data-action="cancel">{{#str}}cancel, coursemail{{/str}}</button>
+    </div>
+</form>

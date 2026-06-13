@@ -1,0 +1,15 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/
+
+# Node tooling (only present in a full Moodle dev tree when running grunt)
+/node_modules/
+
+# Internal / development files: kept locally, never published
+/CLAUDE.md
+/TODO.md
+/docs/
